@@ -1,0 +1,77 @@
+{ pkgs, lib, config, inputs, ... }:
+
+{
+  # https://devenv.sh/basics/
+  env.GREET = "devenv";
+
+  # Shared source of truth for benchmark config — consumed by the justfile.
+  env.SYSTEM_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+  env.CDP_ENDPOINT = "https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b/v1";
+  env.CDP_MODEL = "openai/gpt-oss-120b";
+
+  # https://devenv.sh/packages/
+  packages = with pkgs; [
+    cacert
+    docker-compose
+    git
+    just
+    openssl
+  ];
+
+  # https://devenv.sh/languages/
+  # languages.rust.enable = true;
+
+  languages.python = {
+    enable = true;
+    package = pkgs.python312;
+    uv.enable = true;
+  };
+
+
+  # https://devenv.sh/processes/
+  # processes.dev.exec = "${lib.getExe pkgs.watchexec} -n -- ls -la";
+
+  # https://devenv.sh/services/
+  # services.postgres.enable = true;
+
+  # https://devenv.sh/scripts/
+  scripts.hello.exec = ''
+    echo hello from $GREET
+  '';
+
+  # Shim `docker` to host `podman` so tools that shell out to `docker`
+  # (e.g. harbor) work without Docker being installed.
+  scripts.docker.exec = ''exec podman "$@"'';
+
+  # https://devenv.sh/basics/
+  enterShell = ''
+    hello         # Run scripts directly
+    git --version # Use packages
+
+    # Point docker clients at the running podman machine so `docker compose`
+    # (via the docker shim) connects to the podman socket.
+    if command -v podman >/dev/null 2>&1; then
+      sock=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null || true)
+      if [ -n "$sock" ] && [ -S "$sock" ]; then
+        export DOCKER_HOST="unix://$sock"
+      fi
+    fi
+  '';
+
+  # https://devenv.sh/tasks/
+  # tasks = {
+  #   "myproj:setup".exec = "mytool build";
+  #   "devenv:enterShell".after = [ "myproj:setup" ];
+  # };
+
+  # https://devenv.sh/tests/
+  enterTest = ''
+    echo "Running tests"
+    git --version | grep --color=auto "${pkgs.git.version}"
+  '';
+
+  # https://devenv.sh/git-hooks/
+  # git-hooks.hooks.shellcheck.enable = true;
+
+  # See full reference at https://devenv.sh/reference/options/
+}

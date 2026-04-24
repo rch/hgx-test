@@ -1,0 +1,19 @@
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Fetched CDP cert bundle
+certs/
+
+# harbor job outputs
+jobs/
+
+# CDP bearer token
+.cdp-token
