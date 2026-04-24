@@ -21,13 +21,12 @@ Smoke test harness for running [terminal-bench](https://www.tbench.ai/) against 
 
 ```bash
 just cert                          # one-time: fetch the CDP endpoint's self-signed cert into certs/bundle.pem
-pbpaste | just token               # save CDP_TOKEN (stored in .cdp-token, gitignored)
-# or: `just token` and paste at the prompt
-# or: `export CDP_TOKEN=…` in your shell — the recipe picks it up too
+export CDP_TOKEN="$(pbpaste)"      # paste token from CDP UI to clipboard first
+# or: export CDP_TOKEN='<paste token>'
 just benchmark -l 1 -n 1           # run a single terminal-bench-2 trial against the CDP endpoint
 ```
 
-`just benchmark` probes the endpoint before running; if it returns 401/403 it re-prompts via `just token` and retries once. On a clean run, trial results land under `jobs/<timestamp>/` and can be browsed with `harbor view jobs`.
+`just benchmark` probes the endpoint before running; if it returns 401/403 it tells you to refresh `CDP_TOKEN` and re-export. On a clean run, trial results land under `jobs/<timestamp>/` and can be browsed with `harbor view jobs`.
 
 Pass any additional flags through to `harbor run`, e.g. `just benchmark -l 5 -n 2`.
 

@@ -2,7 +2,6 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 cert_dir := "certs"
 bundle := cert_dir / "bundle.pem"
-token_file := ".cdp-token"
 
 default:
     @just --list
@@ -18,39 +17,19 @@ cert:
     cat "$SYSTEM_CA_BUNDLE" {{cert_dir}}/cdp.pem > {{bundle}}
     echo "Wrote {{bundle}}"
 
-# Save a CDP token (from the CDP UI) to {{token_file}}.
-# Accepts piped stdin (`pbpaste | just token`) or prompts with visible paste
-# (silent read misbehaves on long JWTs with bracketed-paste terminals).
-token:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ ! -t 0 ]; then
-      tok=$(cat)
-    else
-      read -r -p "Paste CDP token (from CDP UI): " tok </dev/tty
-    fi
-    tok=$(printf '%s' "$tok" | tr -d '\r\n')
-    [ -n "$tok" ] || { echo "empty token; aborting" >&2; exit 1; }
-    umask 077
-    printf '%s' "$tok" > {{token_file}}
-    echo "Saved to {{token_file}}"
-
 # Run terminal-bench against the CDP endpoint. Extra args forward to harbor.
 benchmark *ARGS:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    [ -f {{bundle}} ] || just cert
-
-    # Load token: file wins, env is fallback, else prompt.
-    if [ -f {{token_file}} ]; then
-      CDP_TOKEN=$(cat {{token_file}})
-    fi
     if [ -z "${CDP_TOKEN:-}" ]; then
-      just token
-      CDP_TOKEN=$(cat {{token_file}})
+      echo "CDP_TOKEN is not set. Grab a token from the CDP UI and:" >&2
+      echo "  export CDP_TOKEN='<paste>'" >&2
+      echo "  # or: export CDP_TOKEN=\"\$(pbpaste)\"" >&2
+      exit 1
     fi
-    export CDP_TOKEN
+
+    [ -f {{bundle}} ] || just cert
 
     probe() {
       curl -sS --cacert {{bundle}} -o /dev/null -w '%{http_code}' \
@@ -62,11 +41,8 @@ benchmark *ARGS:
 
     code=$(probe || echo 000)
     if [ "$code" = "401" ] || [ "$code" = "403" ]; then
-      echo "Token rejected (HTTP $code) — rolling."
-      just token
-      CDP_TOKEN=$(cat {{token_file}})
-      export CDP_TOKEN
-      code=$(probe || echo 000)
+      echo "CDP_TOKEN rejected (HTTP $code). Refresh it from the CDP UI and re-export." >&2
+      exit 1
     fi
     if [ "$code" != "200" ]; then
       echo "CDP endpoint probe failed (HTTP $code)" >&2

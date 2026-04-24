@@ -14,6 +14,3 @@ certs/
 
 # harbor job outputs
 jobs/
-
-# CDP bearer token
-.cdp-token
