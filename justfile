@@ -18,11 +18,18 @@ cert:
     cat "$SYSTEM_CA_BUNDLE" {{cert_dir}}/cdp.pem > {{bundle}}
     echo "Wrote {{bundle}}"
 
-# Prompt for a new CDP token (from the CDP UI) and save to {{token_file}}.
+# Save a CDP token (from the CDP UI) to {{token_file}}.
+# Accepts piped stdin (`pbpaste | just token`) or prompts with visible paste
+# (silent read misbehaves on long JWTs with bracketed-paste terminals).
 token:
     #!/usr/bin/env bash
     set -euo pipefail
-    read -r -s -p "Paste CDP token (from CDP UI): " tok && echo
+    if [ ! -t 0 ]; then
+      tok=$(cat)
+    else
+      read -r -p "Paste CDP token (from CDP UI): " tok </dev/tty
+    fi
+    tok=$(printf '%s' "$tok" | tr -d '\r\n')
     [ -n "$tok" ] || { echo "empty token; aborting" >&2; exit 1; }
     umask 077
     printf '%s' "$tok" > {{token_file}}
