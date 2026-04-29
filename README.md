@@ -11,10 +11,11 @@ Smoke test harness for running [terminal-bench](https://www.tbench.ai/) against 
 
 1. `cd` into the repo. Direnv will load `devenv.nix`, which provisions the toolchain and exports `DOCKER_HOST` pointing at the podman machine socket.
 2. Grab a `CDP_TOKEN` from the CDP UI. Tokens are short-lived (~1 hour).
-3. Install the `harbor` CLI once:
+3. Install the `harbor` CLI once. **Pin the version** — the local patches in
+   `patches/` target harbor's internal API:
 
    ```bash
-   uv tool install harbor
+   uv tool install 'harbor==0.5.0'
    ```
 
 ## Run the smoke test
@@ -37,6 +38,26 @@ Pass any additional flags through to `harbor run`, e.g. `just benchmark -l 5 -n 
 - `CDP_ENDPOINT` — the `/v1` base URL for the gpt-oss-120b endpoint.
 - `CDP_MODEL` — `openai/gpt-oss-120b` (the only model the endpoint advertises).
 - `SYSTEM_CA_BUNDLE` — the nix Mozilla CA bundle, merged with the CDP cert by `just cert`.
+
+## Local patches
+
+`patches/` carries small monkeypatches against harbor's internal API. They're
+applied via `scripts/harbor_run.py`, which `just benchmark` invokes using
+harbor's own venv interpreter — the installed package is never modified, so
+`uv tool upgrade harbor` won't disturb them.
+
+Current patches:
+
+- `patches/empty_content.py` — substitutes a placeholder for empty
+  `content` strings in `Chat._messages`. gpt-oss-120b (and other reasoning
+  models) sometimes return responses with empty `content` (only
+  `reasoning_content` populated); vLLM's strict Pydantic validation rejects
+  empty strings on the next request with `String should have at least 1
+  character`.
+
+Patches target harbor's internal symbols (`harbor.llms.chat.Chat.chat`), so
+a `harbor` upgrade beyond `0.5.0` may require updating them. Failures surface
+loudly at import time (`AttributeError`) rather than silently no-op.
 
 ## Known limits
 
