@@ -1,3 +1,5 @@
+build/
+
 # Devenv
 .devenv*
 devenv.local.nix
@@ -14,3 +16,6 @@ certs/
 
 # harbor job outputs
 jobs/
+
+# Python bytecode
+__pycache__/
