@@ -17,6 +17,7 @@
     git
     just
     openssl
+    slirp4netns
   ];
 
   # https://devenv.sh/languages/
@@ -64,6 +65,14 @@
         export DOCKER_HOST="unix://$sock"
       fi
     fi
+
+    # Use Nix-provided slirp4netns for rootless container networking.
+    # This avoids aardvark-dns which requires D-Bus (unavailable without a systemd user session).
+    mkdir -p ~/.config/containers
+    cat > ~/.config/containers/containers.conf <<EOF
+[network]
+default_rootless_network_cmd = "${pkgs.slirp4netns}/bin/slirp4netns"
+EOF
   '';
 
   # https://devenv.sh/tasks/
