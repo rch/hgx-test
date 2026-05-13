@@ -15,6 +15,7 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 
 import patches.empty_content  # noqa: F401, E402 — monkeypatches Chat.chat on import
+import patches.docker_preflight  # noqa: F401, E402 — relaxes preflight for podman socket
 
 from harbor.cli.main import app  # noqa: E402
 
