@@ -17,8 +17,7 @@
     git
     just
     openssl
-    slirp4netns
-  ];
+  ] ++ lib.optionals pkgs.stdenv.isLinux [ pkgs.slirp4netns ];
 
   # https://devenv.sh/languages/
   # languages.rust.enable = true;
