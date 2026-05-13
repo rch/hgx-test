@@ -42,7 +42,9 @@
 
   # Shim `docker` to host `podman` so tools that shell out to `docker`
   # (e.g. harbor) work without Docker being installed.
-  scripts.docker.exec = ''exec podman "$@"'';
+  # Unset LD_LIBRARY_PATH so Nix gcc libs don't contaminate system podman
+  # on Linux (glibc version mismatch).
+  scripts.docker.exec = ''exec env -u LD_LIBRARY_PATH podman "$@"'';
 
   # https://devenv.sh/basics/
   enterShell = ''
