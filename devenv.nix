@@ -49,10 +49,15 @@
     hello         # Run scripts directly
     git --version # Use packages
 
-    # Point docker clients at the running podman machine so `docker compose`
-    # (via the docker shim) connects to the podman socket.
+    # Point docker clients at the podman socket so `docker compose`
+    # (via the docker shim) connects to podman.
+    # On Linux podman runs natively; on macOS/Windows it needs a machine.
     if command -v podman >/dev/null 2>&1; then
-      sock=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null || true)
+      if [[ "$(uname)" == "Linux" ]]; then
+        sock="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+      else
+        sock=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null || true)
+      fi
       if [ -n "$sock" ] && [ -S "$sock" ]; then
         export DOCKER_HOST="unix://$sock"
       fi
