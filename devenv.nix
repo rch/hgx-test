@@ -12,6 +12,7 @@
   # https://devenv.sh/packages/
   packages = with pkgs; [
     cacert
+    docker
     docker-compose
     git
     just

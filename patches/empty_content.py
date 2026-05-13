@@ -1,13 +1,16 @@
-"""Patch harbor's Chat.chat to handle empty assistant content.
+"""Patch harbor's Chat.chat to handle empty or null assistant content.
 
 Reasoning-style models (e.g. gpt-oss-120b) sometimes return responses with
-empty `content` (only `reasoning_content` is populated). Stored as
-`{"role": "assistant", "content": ""}`, this gets sent on the *next* call as
-part of `message_history`. vLLM's strict Pydantic validation rejects empty
-content with: `String should have at least 1 character`.
+`content` set to "" or null (only `reasoning_content` is populated). Stored as
+`{"role": "assistant", "content": ""}` or `{..., "content": null}`, this gets
+sent on the *next* call as part of `message_history`. vLLM's strict Pydantic
+validation rejects empty/null content with: `String should have at least 1
+character`.
 
-We substitute a single-space placeholder for empty `content` (and empty
-`prompt`), which preserves message structure while passing strict validation.
+For null content, we promote `reasoning_content` into `content` so the agent
+sees actual model output. For empty string content (or absent reasoning_content),
+we substitute a single-space placeholder. Both preserve message structure while
+passing strict validation.
 
 Pinned to harbor 0.5.0 via the project README. If the upstream `Chat.chat`
 signature changes, this will fail loudly at import time.
@@ -23,8 +26,11 @@ _PLACEHOLDER = " "
 
 def _scrub_messages(messages):
     for m in messages:
-        if isinstance(m, dict) and m.get("content") == "":
-            m["content"] = _PLACEHOLDER
+        if not isinstance(m, dict):
+            continue
+        if m.get("content") == "" or m.get("content") is None:
+            reasoning = m.get("reasoning_content")
+            m["content"] = reasoning if reasoning else _PLACEHOLDER
 
 
 _original_chat = Chat.chat
