@@ -17,7 +17,7 @@
     git
     just
     openssl
-  ] ++ lib.optionals pkgs.stdenv.isLinux [ pkgs.slirp4netns ];
+  ];
 
   # https://devenv.sh/languages/
   # languages.rust.enable = true;
@@ -65,13 +65,12 @@
       fi
     fi
 
-    # Use Nix-provided slirp4netns for rootless container networking.
-    # This avoids aardvark-dns which requires D-Bus (unavailable without a systemd user session).
-    mkdir -p ~/.config/containers
-    cat > ~/.config/containers/containers.conf <<EOF
-[network]
-default_rootless_network_cmd = "${pkgs.slirp4netns}/bin/slirp4netns"
-EOF
+    # Use slirp4netns for rootless container networking (avoids aardvark-dns which needs D-Bus).
+    # On RHEL, /usr/bin/slirp4netns is installed alongside podman.
+    if command -v slirp4netns >/dev/null 2>&1; then
+      mkdir -p ~/.config/containers
+      printf '[network]\ndefault_rootless_network_cmd = "%s"\n' "$(command -v slirp4netns)" > ~/.config/containers/containers.conf
+    fi
   '';
 
   # https://devenv.sh/tasks/
