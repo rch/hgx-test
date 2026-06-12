@@ -144,8 +144,8 @@ S3 path: `s3://registry-bucket/kc83-7zuv-yln1-ny8u/x8by-90pj-yla1-e2uh`
 ### Root Cause
 The `storage-secrets` Kubernetes secret (namespace `serving-default`) holds the Ozone S3 credentials configured when CAII storage was set up via the UI. The Ozone S3 gateway uses Kerberos-derived secrets via `ozone s3 getsecret`. At some point after initial CAII setup, the secret was regenerated, making the stored value stale and invalid.
 
-**Stored in Kubernetes:** `100f244eab1a88f1c994ef15ce34c2a08f45483c6a8c03cc3b641067b2ea3854`  
-**Current secret from Ozone:** `3debeee70a2e32204f26494ee3ab48ca0f7635ba7782bd360a93bad5ba884600`
+**Stored in Kubernetes:** `<REDACTED>`  
+**Current secret from Ozone:** `<REDACTED>`
 
 Bucket ACLs were correct — `HTTP/0400-dsm-lvcpu...` principal has `ALL` access on `registry-bucket`.
 
@@ -168,7 +168,7 @@ ozone s3 getsecret
 
 ### Fix
 ```bash
-NEW_SECRET=$(printf '%s' '3debeee70a2e32204f26494ee3ab48ca0f7635ba7782bd360a93bad5ba884600' | base64)
+NEW_SECRET=$(printf '%s' '<REDACTED>' | base64)
 
 oc patch secret storage-secrets -n serving-default \
   --type='json' \

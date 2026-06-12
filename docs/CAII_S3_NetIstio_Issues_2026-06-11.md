@@ -35,7 +35,7 @@ oc get secret storage-secrets -n serving-default -o jsonpath='{.data}' | \
 **Output:**
 ```
 s3.access.key.id.name: HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM
-s3.access.key.name:   100f244eab1a88f1c994ef15ce34c2a08f45483c6a8c03cc3b641067b2ea3854
+s3.access.key.name:   <REDACTED>
 s3.endpoint:          https://0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com:9879
 s3.region:            us-east-1
 ```
@@ -81,10 +81,10 @@ ozone s3 getsecret
 **Output:**
 ```
 awsAccessKey=HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM
-awsSecret=3debeee70a2e32204f26494ee3ab48ca0f7635ba7782bd360a93bad5ba884600
+awsSecret=<REDACTED>
 ```
 
-**Root Cause Confirmed:** The current secret (`3debeee...`) does not match what is stored in Kubernetes (`100f244...`). The secret was regenerated at some point after CAII was originally configured, making the stored credentials invalid.
+**Root Cause Confirmed:** The current secret does not match what is stored in Kubernetes. The secret was regenerated at some point after CAII was originally configured, making the stored credentials invalid.
 
 ---
 
@@ -93,7 +93,7 @@ awsSecret=3debeee70a2e32204f26494ee3ab48ca0f7635ba7782bd360a93bad5ba884600
 Update the `storage-secrets` secret in both `serving-default` and `cml-serving` namespaces with the current secret:
 
 ```bash
-NEW_SECRET=$(printf '%s' '3debeee70a2e32204f26494ee3ab48ca0f7635ba7782bd360a93bad5ba884600' | base64)
+NEW_SECRET=$(printf '%s' '<REDACTED>' | base64)
 
 oc patch secret storage-secrets -n serving-default \
   --type='json' \
