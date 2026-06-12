@@ -1,6 +1,6 @@
 # CAII Full Incident Report — All Issues
 **Date:** June 11, 2026  
-**Environment:** OpenShift cluster `hgx-ocp.kcloud-dev.comops.cloudera.com`  
+**Environment:** OpenShift cluster `<CLUSTER-DOMAIN>`  
 **Service:** Cloudera AI Inference Service (CAII) 1.9.0-b45  
 **Total Issues:** 4  
 **Total Status:** All Resolved ✅
@@ -97,13 +97,13 @@ tls: failed to verify certificate: x509: certificate signed by unknown authority
 ```
 
 ### Root Cause
-Model Registry (`modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com`) uses a self-signed certificate (issued 2026-03-27). The `caii-pvc-truststore` ConfigMap in the `cml-serving` namespace holds the CA bundle used by all CAII components. The new CAII install was missing this cert — the previous install had it but the fresh reinstall did not carry it over.
+Model Registry (`<MODEL-REGISTRY-HOST>`) uses a self-signed certificate (issued 2026-03-27). The `caii-pvc-truststore` ConfigMap in the `cml-serving` namespace holds the CA bundle used by all CAII components. The new CAII install was missing this cert — the previous install had it but the fresh reinstall did not carry it over.
 
 ### Fix
 
 ```bash
 # Extract the self-signed cert
-openssl s_client -connect modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com:443 \
+openssl s_client -connect <MODEL-REGISTRY-HOST>:443 \
   </dev/null 2>/dev/null | openssl x509 -outform PEM > ~/hgx/modelregistry-ca.pem
 
 # Append to existing bundle (backup first)
@@ -147,7 +147,7 @@ The `storage-secrets` Kubernetes secret (namespace `serving-default`) holds the 
 **Stored in Kubernetes:** `<REDACTED>`  
 **Current secret from Ozone:** `<REDACTED>`
 
-Bucket ACLs were correct — `HTTP/0400-dsm-lvcpu...` principal has `ALL` access on `registry-bucket`.
+Bucket ACLs were correct — `HTTP/<OZONE-HOST-SHORT>...` principal has `ALL` access on `registry-bucket`.
 
 ### Key Diagnostic Commands
 ```bash
@@ -162,7 +162,7 @@ ozone sh bucket getacl /s3v/registry-bucket
 
 # Get current S3 secret (as HTTP principal)
 kinit -kt /run/cloudera-scm-agent/process/.../ozone.keytab \
-  HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM
+  HTTP/<OZONE-HOST>@<KERBEROS-REALM>
 ozone s3 getsecret
 ```
 
@@ -252,7 +252,7 @@ oc get inferenceservice cdp-inference-svc4 -n serving-default
 
 **Final endpoint URL:**
 ```
-https://ml-9b1604d7-290.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/cdp-inference-svc4
+https://<INFERENCE-ENDPOINT-HOST>/namespaces/serving-default/endpoints/cdp-inference-svc4
 ```
 
 ---
@@ -261,12 +261,12 @@ https://ml-9b1604d7-290.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/s
 
 | Component | Value |
 |-----------|-------|
-| OpenShift cluster | `hgx-ocp.kcloud-dev.comops.cloudera.com` |
+| OpenShift cluster | `<CLUSTER-DOMAIN>` |
 | Kubernetes version | 1.30.5 |
 | CAII version | 1.9.0-b45 |
-| Ozone S3 gateway | `https://0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com:9879` |
-| Kerberos realm | `HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM` |
-| S3 principal | `HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@...` |
+| Ozone S3 gateway | `https://<OZONE-HOST>:9879` |
+| Kerberos realm | `<KERBEROS-REALM>` |
+| S3 principal | `HTTP/<OZONE-HOST>@...` |
 | Model | `bigcode/starcoder2-7b` (TensorRT, Triton) |
 | Namespaces | `cert-manager`, `kserve`, `cml-serving`, `serving-default`, `knative-serving` |
 

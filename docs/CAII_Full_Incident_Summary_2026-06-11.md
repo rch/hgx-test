@@ -1,6 +1,6 @@
 # CAII Installation & Model Registry — Full Incident Summary
 **Date:** June 11, 2026  
-**Environment:** OpenShift (`hgx-ocp.kcloud-dev.comops.cloudera.com`)  
+**Environment:** OpenShift (`<CLUSTER-DOMAIN>`)  
 **Service:** Cloudera AI Inference Service (CAII) v1.9.0-b45  
 **Status:** Both issues resolved ✅
 
@@ -108,7 +108,7 @@ After the fix, CAII installation was retried and all deployments installed succe
 ### Symptom
 After successful installation, creating a Model Endpoint in the CAII UI failed:
 ```
-Get "https://modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/api/v2/models/.../versions/1":
+Get "https://<MODEL-REGISTRY-HOST>/api/v2/models/.../versions/1":
 tls: failed to verify certificate: x509: certificate signed by unknown authority
 ```
 
@@ -121,7 +121,7 @@ The previous CAII installation had worked because it contained the **old** Model
 
 ```bash
 # Confirm cert is self-signed (issuer == subject)
-openssl s_client -connect modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com:443 \
+openssl s_client -connect <MODEL-REGISTRY-HOST>:443 \
   -showcerts </dev/null 2>/dev/null | openssl x509 -noout -issuer -subject -dates
 # Result:
 #   issuer=O=HGX-OCP..., CN=modelregistry.apps...
@@ -149,7 +149,7 @@ oc get deployments -n cml-serving
 
 ```bash
 # Step 1 — Extract model registry self-signed cert
-openssl s_client -connect modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com:443 \
+openssl s_client -connect <MODEL-REGISTRY-HOST>:443 \
   </dev/null 2>/dev/null | openssl x509 -outform PEM > modelregistry-ca.pem
 
 # Step 2 — Save current trust bundle (backup)

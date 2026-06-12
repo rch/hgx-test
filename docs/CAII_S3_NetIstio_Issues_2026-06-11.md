@@ -1,6 +1,6 @@
 # CAII Inference Endpoint — S3 AccessDenied & Net-Istio CrashLoopBackOff
 **Date:** June 11, 2026  
-**Environment:** OpenShift cluster `hgx-ocp.kcloud-dev.comops.cloudera.com`  
+**Environment:** OpenShift cluster `<CLUSTER-DOMAIN>`  
 **Service:** Cloudera AI Inference Service (CAII) 1.9.0-b45  
 **Model:** `bigcode/starcoder2-7b` (TensorRT format, Triton container)  
 **InferenceService:** `cdp-inference-svc4` in namespace `serving-default`  
@@ -19,7 +19,7 @@ calling the ListObjects operation: Access Denied
 ```
 
 S3 path: `s3://registry-bucket/kc83-7zuv-yln1-ny8u/x8by-90pj-yla1-e2uh`  
-S3 endpoint: `https://0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com:9879`
+S3 endpoint: `https://<OZONE-HOST>:9879`
 
 ---
 
@@ -34,13 +34,13 @@ oc get secret storage-secrets -n serving-default -o jsonpath='{.data}' | \
 
 **Output:**
 ```
-s3.access.key.id.name: HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM
+s3.access.key.id.name: HTTP/<OZONE-HOST>@<KERBEROS-REALM>
 s3.access.key.name:   <REDACTED>
-s3.endpoint:          https://0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com:9879
+s3.endpoint:          https://<OZONE-HOST>:9879
 s3.region:            us-east-1
 ```
 
-The access key principal is `HTTP/0400-dsm-lvcpu...` — the Ozone S3 gateway's own Kerberos service principal. This is expected for Kerberos-backed Ozone S3 (credentials generated via `ozone s3 getsecret`).
+The access key principal is `HTTP/<OZONE-HOST-SHORT>...` — the Ozone S3 gateway's own Kerberos service principal. This is expected for Kerberos-backed Ozone S3 (credentials generated via `ozone s3 getsecret`).
 
 #### Step 2: Verify bucket ownership and ACLs
 ```bash
@@ -58,7 +58,7 @@ ozone sh bucket getacl /s3v/registry-bucket
 }
 [ {
   "type": "USER",
-  "name": "HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM",
+  "name": "HTTP/<OZONE-HOST>@<KERBEROS-REALM>",
   "aclScope": "ACCESS",
   "aclList": [ "ALL" ]
 } ]
@@ -72,7 +72,7 @@ The S3 secret in Ozone is generated at a point in time via `ozone s3 getsecret` 
 ```bash
 # On the Ozone host, kinit as the HTTP principal
 kinit -kt /run/cloudera-scm-agent/process/1546415926-ozone-OZONE_RECON/ozone.keytab \
-  HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM
+  HTTP/<OZONE-HOST>@<KERBEROS-REALM>
 
 # Get the current S3 secret
 ozone s3 getsecret
@@ -80,7 +80,7 @@ ozone s3 getsecret
 
 **Output:**
 ```
-awsAccessKey=HTTP/0400-dsm-lvcpu.hgx-ocp.kcloud-dev.comops.cloudera.com@HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM
+awsAccessKey=HTTP/<OZONE-HOST>@<KERBEROS-REALM>
 awsSecret=<REDACTED>
 ```
 
@@ -208,7 +208,7 @@ oc get inferenceservice cdp-inference-svc4 -n serving-default
 **Final state:**
 ```
 NAME                 URL                                                                                     READY
-cdp-inference-svc4   https://ml-9b1604d7-290.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/...    True
+cdp-inference-svc4   https://<INFERENCE-ENDPOINT-HOST>/namespaces/...    True
 ```
 
 ---

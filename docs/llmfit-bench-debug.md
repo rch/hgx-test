@@ -3,7 +3,7 @@
 **Date:** May 18, 2026  
 **Tool:** llmfit 0.9.25  
 **Provider:** vLLM (Cloudera ML endpoint)  
-**Endpoint:** `https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b`
+**Endpoint:** `https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b`
 
 ---
 
@@ -119,7 +119,7 @@ Original command used `gpt-oss-120G` which didn't match.
 """Local HTTP proxy that forwards to an HTTPS endpoint, skipping TLS verification."""
 import http.server, urllib.request, ssl, sys
 
-TARGET = "https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b"
+TARGET = "https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b"
 LOCAL_PORT = 18080
 API_KEY = "<your-jwt-token>"
 

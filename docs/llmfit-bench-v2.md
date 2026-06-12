@@ -4,7 +4,7 @@
 **Tool:** llmfit 0.9.25  
 **Provider:** vLLM (Cloudera ML endpoint)  
 **OS:** RHEL/CentOS (Linux)  
-**Endpoint:** `https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b`
+**Endpoint:** `https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b`
 
 ---
 
@@ -29,7 +29,7 @@ llmfit bench  →  http://127.0.0.1:18080 (proxy)  →  https://<cloudera-ml-end
 ```bash
 llmfit bench \
   --provider vllm \
-  --url "https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b/v1" \
+  --url "https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b/v1" \
   --api-key "eyJraWQi..." \
   "gpt-oss-120G"
 ```
@@ -102,7 +102,7 @@ The system CA trust store was updated, but this doesn't help because the issue i
 ```bash
 # Step 1 — Fetch the server's certificate chain
 openssl s_client \
-  -connect ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com:443 \
+  -connect ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>:443 \
   -showcerts </dev/null 2>/dev/null \
   | awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/' \
   > /etc/pki/ca-trust/source/anchors/hgx-ocp.crt
@@ -134,7 +134,7 @@ Before debugging llmfit, confirm the token and endpoint are valid using curl:
 # Test the /models endpoint (GET) — should return 200 with model list
 curl -sk \
   -H "Authorization: Bearer <your-token>" \
-  "https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b/v1/models"
+  "https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b/v1/models"
 ```
 
 **Expected output:**
@@ -148,7 +148,7 @@ curl -sk \
   -H "Authorization: Bearer <your-token>" \
   -H "Content-Type: application/json" \
   -d '{"model":"openai/gpt-oss-120b","messages":[{"role":"user","content":"hello"}],"max_tokens":10}' \
-  "https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b/v1/chat/completions"
+  "https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b/v1/chat/completions"
 ```
 
 **Expected output:** JSON with `choices[0].message.content`
@@ -189,7 +189,7 @@ Look for the `"id"` field in the response — that is the exact string to use as
 """Local HTTP proxy that forwards to an HTTPS endpoint, skipping TLS verification."""
 import http.server, urllib.request, ssl, sys
 
-TARGET = "https://ml-a995e882-1c8.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/namespaces/serving-default/endpoints/epgptoss120b"
+TARGET = "https://ml-a995e882-1c8.apps.<CLUSTER-DOMAIN>/namespaces/serving-default/endpoints/epgptoss120b"
 LOCAL_PORT = 18080
 API_KEY = "<your-jwt-token>"
 

@@ -12,7 +12,7 @@
 When creating a Model Endpoint in the CAII UI, the following error appeared:
 
 ```
-Get "https://modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com/api/v2/models/.../versions/1":
+Get "https://<MODEL-REGISTRY-HOST>/api/v2/models/.../versions/1":
 tls: failed to verify certificate: x509: certificate signed by unknown authority
 ```
 
@@ -35,14 +35,14 @@ The previous CAII installation had the old Model Registry cert in its trust bund
 
 ### Step 1 — Identify the certificate problem
 ```bash
-openssl s_client -connect modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com:443 \
+openssl s_client -connect <MODEL-REGISTRY-HOST>:443 \
   -showcerts </dev/null 2>/dev/null | openssl x509 -noout -issuer -subject -dates
 ```
 
 **Output:**
 ```
-issuer=O=HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM, CN=modelregistry.apps.hgx-ocp...
-subject=O=HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM, CN=modelregistry.apps.hgx-ocp...
+issuer=O=<KERBEROS-REALM>, CN=modelregistry.apps.hgx-ocp...
+subject=O=<KERBEROS-REALM>, CN=modelregistry.apps.hgx-ocp...
 notBefore=Mar 27 23:20:43 2026 GMT
 notAfter=Mar 27 23:20:43 2027 GMT
 ```
@@ -80,7 +80,7 @@ The Model Registry self-signed cert was absent from both.
 
 ### Step 1 — Extract the Model Registry certificate
 ```bash
-openssl s_client -connect modelregistry.apps.hgx-ocp.kcloud-dev.comops.cloudera.com:443 \
+openssl s_client -connect <MODEL-REGISTRY-HOST>:443 \
   </dev/null 2>/dev/null | openssl x509 -outform PEM > modelregistry-ca.pem
 ```
 
@@ -145,4 +145,4 @@ oc rollout status deployment -n cml-serving api archiver fluentd-forwarder usage
    oc rollout restart deployment -n cml-serving api archiver fluentd-forwarder usage-reporter
    ```
 
-3. **Long-term fix:** Replace the Model Registry self-signed cert with one signed by the cluster's internal CA (`HGX-OCP.KCLOUD-DEV.COMOPS.CLOUDERA.COM CA`), which is already trusted by CAII. This eliminates the need to manually update the trust bundle on every cert rotation.
+3. **Long-term fix:** Replace the Model Registry self-signed cert with one signed by the cluster's internal CA (`<KERBEROS-REALM> CA`), which is already trusted by CAII. This eliminates the need to manually update the trust bundle on every cert rotation.
